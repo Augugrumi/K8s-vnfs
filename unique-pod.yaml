@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ name: launcherall-deployment
+ labels:
+   app: launcherall
+spec:
+ replicas: 1
+ template:
+   metadata:
+    labels:
+      app: my-vnf
+   spec:
+     containers:
+     - env:
+       - name: PORT
+         value: "55631"
+       - name: STRING_TO_ADD
+         value: vnf1
+       image: augugrumi/addervnf:latest
+       name: vnf1
+     - env:
+       - name: PORT
+         value: "55632"
+       - name: STRING_TO_ADD
+         value: vnf2
+       image: augugrumi/addervnf:latest
+       name: vnf2
+     - env:
+       - name: LINKS
+         value: http://localhost:55631 http://localhost:55632 http://192.168.30.13:55634
+       - name: PORT
+         value: "55633"
+       image: augugrumi/launchervnf:latest
+       name: launcher
+       ports:
+       - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: launcherall-deployment
+ labels:
+   app: launcherall
+spec:
+ ports:
+ - port: 55633
+ type: NodePort
+ selector:
+   app: my-vnf
