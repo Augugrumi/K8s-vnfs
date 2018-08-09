@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: vnf1-service
+ namespace: default
+ labels:
+   label: vnf1-service
+spec:
+ type: NodePort
+ ports:
+   - port: 55631
+     nodePort: 32001
+     targetPort: 55631
+ selector:
+   name: vnf1-selector
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ labels:
+   label: vnf1-deployment
+   service: vnf1-service
+ name: vnf1-deployment
+ namespace: default
+spec:
+ replicas: 1
+ strategy: {}
+ template:
+   metadata:
+     creationTimestamp: null
+     labels:
+       name: vnf1-selector
+   spec:
+     containers:
+     - env:
+       - name: PORT
+         value: "55631"
+       - name: STRING_TO_ADD
+         value: vnf1
+       image: augugrumi/addervnf:latest
+       name: vnf1
+       resources: {}
+     hostname: vnf1
+     restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: vnf2-service
+ namespace: default
+ labels:
+   label: vnf2-service
+spec:
+ type: NodePort
+ ports:
+   - port: 55632
+     nodePort: 32002
+     targetPort: 55632
+ selector:
+   name: vnf2-selector
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ labels:
+   label: vnf2-deployment
+   service: vnf2-service
+ name: vnf2-deployment
+ namespace: default
+spec:
+ replicas: 1
+ strategy: {}
+ template:
+   metadata:
+     creationTimestamp: null
+     labels:
+       name: vnf2-selector
+   spec:
+     containers:
+     - env:
+       - name: PORT
+         value: "55632"
+       - name: STRING_TO_ADD
+         value: vnf2
+       image: augugrumi/addervnf:latest
+       name: vnf2
+       resources: {}
+     hostname: vnf2
+     restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: launcher-service
+ namespace: default
+ labels:
+   label: launcher-service
+spec:
+ type: NodePort
+ ports:
+   - port: 55633
+     nodePort: 32003
+     targetPort: 55633
+ selector:
+   name: launcher-selector
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ labels:
+   label: launcher-deployment
+   service: launcher-service
+ name: launcher-deployment
+ namespace: default
+spec:
+ replicas: 1
+ strategy: {}
+ template:
+   metadata:
+     creationTimestamp: null
+     labels:
+       name: launcher-selector
+   spec:
+     containers:
+     - env:
+       - name: LINKS
+         value: http://192.168.30.13:32001 http://192.168.30.13:32002 http://192.168.30.13:55634
+       - name: PORT
+         value: "55633"
+       image: augugrumi/launchervnf:latest
+       name: launcher
+       ports:
+       - containerPort: 80
+       resources: {}
+     hostname: launcher
+     restartPolicy: Always
+status: {}
