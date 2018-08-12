@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ name: alternative-launcherall-deployment
+ labels:
+   app: alternative-launcherall
+spec:
+ replicas: 1
+ template:
+   metadata:
+    labels:
+      app: alternative-my-vnf
+   spec:
+     containers:
+     - env:
+       - name: PORT
+         value: "55630"
+       image: augugrumi/alternative-dispatcher:latest
+       name: alternative-dispatcher
+     - env:
+       - name: PORT
+         value: "55631"
+       - name: STRING_TO_ADD
+         value: vnf1
+       image: augugrumi/alternative-addervnf:latest
+       name: alternative-vnf1
+     - env:
+       - name: PORT
+         value: "55632"
+       - name: STRING_TO_ADD
+         value: vnf2
+       image: augugrumi/alternative-addervnf:latest
+       name: alternative-vnf2
+     - env:
+       - name: LINKS
+         value: http://localhost:55630 http://localhost:55631 http://localhost:55632 http://192.168.30.13:55634
+       - name: PORT
+         value: "55633"
+       image: augugrumi/alternative-launchervnf:latest
+       name: alternative-launcher
+       ports:
+       - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: alternative-launcherall-deployment
+ labels:
+   app: alternative-launcherall
+spec:
+ ports:
+ - port: 55633
+ type: NodePort
+ selector:
+   app: alternative-my-vnf
+

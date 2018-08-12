@@ -1,0 +1,185 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: alternative-vnf1-service
+ namespace: default
+ labels:
+   label: alternative-vnf1-service
+spec:
+ type: NodePort
+ ports:
+   - port: 55631
+     nodePort: 32001
+     targetPort: 55631
+ selector:
+   name: alternative-vnf1-selector
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ labels:
+   label: alternative-vnf1-deployment
+   service: alternative-vnf1-service
+ name: alternative-vnf1-deployment
+ namespace: default
+spec:
+ replicas: 1
+ strategy: {}
+ template:
+   metadata:
+     creationTimestamp: null
+     labels:
+       name: alternative-vnf1-selector
+   spec:
+     containers:
+     - env:
+       - name: PORT
+         value: "55631"
+       - name: STRING_TO_ADD
+         value: alternative-vnf1
+       image: augugrumi/alternative-addervnf:latest
+       name: alternative-vnf1
+       resources: {}
+     hostname: alternative-vnf1
+     restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: alternative-vnf2-service
+ namespace: default
+ labels:
+   label: alternative-vnf2-service
+spec:
+ type: NodePort
+ ports:
+   - port: 55632
+     nodePort: 32002
+     targetPort: 55632
+ selector:
+   name: alternative-vnf2-selector
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ labels:
+   label: alternative-vnf2-deployment
+   service: alternative-vnf2-service
+ name: alternative-vnf2-deployment
+ namespace: default
+spec:
+ replicas: 1
+ strategy: {}
+ template:
+   metadata:
+     creationTimestamp: null
+     labels:
+       name: alternative-vnf2-selector
+   spec:
+     containers:
+     - env:
+       - name: PORT
+         value: "55632"
+       - name: STRING_TO_ADD
+         value: alternative-vnf2
+       image: augugrumi/alternative-addervnf:latest
+       name: alternative-vnf2
+       resources: {}
+     hostname: alternative-vnf2
+     restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: alternative-dispatcher-service
+ namespace: default
+ labels:
+   label: alternative-dispatcher-service
+spec:
+ type: NodePort
+ ports:
+   - port: 55630
+     nodePort: 32000
+     targetPort: 55630
+ selector:
+   name: alternative-dispatcher-selector
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ labels:
+   label: alternative-dispatcher-deployment
+   service: alternative-dispatcher-service
+ name: alternative-dispatcher-deployment
+ namespace: default
+spec:
+ replicas: 1
+ strategy: {}
+ template:
+   metadata:
+     creationTimestamp: null
+     labels:
+       name: alternative-dispatcher-selector
+   spec:
+     containers:
+     - env:
+       - name: PORT
+         value: "55630"
+       image: augugrumi/alternative-dispatcher:latest
+       name: alternative-dispatcher
+       ports:
+       - containerPort: 80
+       resources: {}
+     hostname: alternative-dispatcher
+     restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: alternative-launcher-service
+ namespace: default
+ labels:
+   label: alternative-launcher-service
+spec:
+ type: NodePort
+ ports:
+   - port: 55633
+     nodePort: 32003
+     targetPort: 55633
+ selector:
+   name: alternative-launcher-selector
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ labels:
+   label: alternative-launcher-deployment
+   service: alternative-launcher-service
+ name: alternative-launcher-deployment
+ namespace: default
+spec:
+ replicas: 1
+ strategy: {}
+ template:
+   metadata:
+     creationTimestamp: null
+     labels:
+       name: alternative-launcher-selector
+   spec:
+     containers:
+     - env:
+       - name: LINKS
+         value: http://192.168.30.13:32000 http://192.168.30.13:32001 http://192.168.30.13:32002 http://192.168.30.13:55634
+       - name: PORT
+         value: "55633"
+       image: augugrumi/alternative-launchervnf:latest
+       name: alternative-launcher
+       ports:
+       - containerPort: 80
+       resources: {}
+     hostname: alternative-launcher
+     restartPolicy: Always
+status: {}
