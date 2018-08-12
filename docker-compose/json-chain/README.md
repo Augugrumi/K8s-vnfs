@@ -4,10 +4,10 @@ This yaml deploy the chain
     launcher -> vnf1 -> vnf2 -> http://192.168.1.2:55634
 
 Where:
- - `launcher` refers to [https://hub.docker.com/r/augugrumi/launchervnf/](this container) to encapsulate the message into a JSON
- - `vnf1` refers to [https://hub.docker.com/r/augugrumi/addervnf/](this container) to append a string (`vnf1` in this case) to
+ - `launcher` refers to [this container](https://hub.docker.com/r/augugrumi/launchervnf/) to encapsulate the message into a JSON
+ - `vnf1` refers to [this container](https://hub.docker.com/r/augugrumi/addervnf/) to append a string (`vnf1` in this case) to
  the original message
- - `vnf2` refers to [https://hub.docker.com/r/augugrumi/addervnf/](this container) to append a string (`vnf2` in this case) to
+ - `vnf2` refers to [this container](https://hub.docker.com/r/augugrumi/addervnf/) to append a string (`vnf2` in this case) to
  the original message
  - We suppose that on http://192.168.1.2:55634 (change with your ip address) there is a something waiting for messages
  
