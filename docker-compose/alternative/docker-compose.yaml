@@ -1,0 +1,43 @@
+version: '3.3'
+
+services:
+  dispatcher:
+    image: augugrumi/alternative-dispatcher:latest
+    expose:
+      - "55630"
+    restart: always
+    ports:
+      - "55630:55630"
+    environment:
+      PORT: 55630
+
+  vnf1:
+    image: augugrumi/alternative-addervnf:latest
+    expose:
+      - "55631"
+    restart: always
+    ports:
+      - "55631:55631"
+    environment:
+      PORT: 55631
+      STRING_TO_ADD: vnf1
+
+  vnf2:
+    image: augugrumi/alternative-addervnf:latest
+    expose:
+      - "55632"
+    restart: always
+    ports:
+      - "55632:55632"
+    environment:
+      PORT: 55632
+      STRING_TO_ADD: vnf2
+
+  launcher:
+    image: augugrumi/alternative-launchervnf:latest
+    restart: always
+    ports:
+      - "55633:80"
+    environment:
+      PORT: 55633
+      LINKS: http://dispatcher:55630 http://vnf1:55631 http://vnf2:55632 http://192.168.1.6:55634
