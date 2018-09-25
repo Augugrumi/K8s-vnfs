@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: dnsmasq
+  namespace: kube-system
+  labels:
+    k8s-app: dnsmasq-cache
+spec:
+  template:
+    metadata:
+      labels:
+        name: dnsmasq
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      containers:
+        - name: dnsmasq
+          image: andyshinn/dnsmasq:latest
+          args:
+            - "-S"
+            - "/cluster.local/10.96.0.10 /kubernetes.default/10.96.0.10"
+          ports:
+            - containerPort: 53
+              hostPort: 53
+              protocol: UDP
+            - containerPort: 53
+              hostPort: 53
+              protocol: TCP
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+#      dnsConfig:
+#        nameservers:
+#          - 10.96.0.10
+      terminationGracePeriodSeconds: 30
