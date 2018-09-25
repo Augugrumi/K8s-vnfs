@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: vnf1-service
+ namespace: default
+ labels:
+   label: vnf1-service
+spec:
+ type: NodePort
+ ports:
+   - protocol: UDP
+     port: 8767
+     nodePort: 30003
+     targetPort: 8767
+ selector:
+   name: vnf1-selector
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ labels:
+   label: vnf1-deployment
+   service: vnf1-service
+ name: vnf1-deployment
+ namespace: default
+spec:
+ replicas: 1
+ strategy: {}
+ template:
+   metadata:
+     creationTimestamp: null
+     labels:
+       name: vnf1-selector
+   spec:
+     containers:
+       - image: augugrumi/astaire:latest
+         name: vnf1
+         args:
+          - "-i"
+          - "vnf2-service"
+          - "-f"
+          - "30004"
+         resources: {}
+     hostname: vnf1
+     restartPolicy: Always
+     dnsConfig:
+       nameservers:
+         - 192.168.29.25
+     dnsPolicy: "None"
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: vnf2-service
+ namespace: default
+ labels:
+   label: vnf2-service
+spec:
+ type: NodePort
+ ports:
+   - port: 30004
+     protocol: UDP
+     nodePort: 30004
+     targetPort: 30002
+ selector:
+   name: vnf2-selector
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ labels:
+   label: vnf2-deployment
+   service: vnf2-service
+ name: vnf2-deployment
+ namespace: default
+spec:
+ replicas: 1
+ strategy: {}
+ template:
+   metadata:
+     creationTimestamp: null
+     labels:
+       name: vnf2-selector
+   spec:
+     containers:
+       - image: augugrumi/astaire:latest
+         name: vnf2
+         args:
+          - "-l"
+          - "30002"
+         resources: {}
+     hostname: vnf2
+     restartPolicy: Always
+     dnsConfig:
+       nameservers:
+         - 192.168.29.25
+     dnsPolicy:	"None"
+
+status: {}
