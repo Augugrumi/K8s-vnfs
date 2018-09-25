@@ -40,6 +40,11 @@ spec:
           - "vnf2-service"
           - "-f"
           - "30004"
+         env:
+           - name: DNS_IP
+             valueFrom:
+               fieldRef:
+                 fieldPath: status.hostIP
          resources: {}
      hostname: vnf1
      restartPolicy: Always
@@ -89,6 +94,11 @@ spec:
          args:
           - "-l"
           - "30002"
+         env:
+           - name: DNS_IP
+             valueFrom:
+               fieldRef:
+                 fieldPath: status.hostIP
          resources: {}
      hostname: vnf2
      restartPolicy: Always
