@@ -1,0 +1,215 @@
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: roulette-mongodb-deployment
+  namespace: default
+  labels:
+    k8s-app: roulette-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: roulette-db
+  template:
+    metadata:
+      labels:
+        k8s-app: roulette-db
+        name: roulette-db
+    spec:
+      containers:
+      - image: mongo
+        name: roulette-mongodb
+        ports:
+        - name: mongo
+          containerPort: 27017
+          hostPort: 27017
+        volumeMounts:
+            - name: mongo-persistent-storage
+              mountPath: /data/db
+      volumes:
+        - name: mongo-persistent-storage
+          persistentVolumeClaim:
+            claimName: mongo-persistent-storage
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mongo-persistent-storage
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 8Gi
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: roulette-mongodb
+  namespace: default
+spec:
+  selector:
+    k8s-app: roulette-db
+  ports:
+  - name: mongo
+    port: 27017
+  clusterIP: None
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: roulette-config
+  namespace: default
+data:
+  api-diagram.json: |
+    [
+      {
+        "name": "/configuration/ingress",
+        "type": "put",
+        "function": "org.augugrumi.roulette.routes.DefaultIngressPutRoute"
+      },
+      {
+        "name": "/configuration/egress",
+        "type": "put",
+        "function": "org.augugrumi.roulette.routes.DefaultEgressPutRoute"
+      },
+      {
+        "name": "/routes/:spi",
+        "type": "post",
+        "function": "org.augugrumi.roulette.routes.RouteAdderRoute"
+      },
+      {
+        "name": "/routes/:spi",
+        "type": "get",
+        "function": "org.augugrumi.roulette.routes.RouteGetterRoute"
+      },
+      {
+        "name": "/routes/:spi/:si",
+        "type": "get",
+        "function": "org.augugrumi.roulette.routes.VnfNameGetterRoute"
+      },
+      {
+        "name": "/routes/:spi",
+        "type": "delete",
+        "function": "org.augugrumi.roulette.routes.RouteDeleterRoute"
+      },
+      {
+        "name": "/routes/:spi",
+        "type": "put",
+        "function": "org.augugrumi.roulette.routes.RouteUpdaterRoute"
+      },
+      {
+        "name": "/endpoints/",
+        "type": "put",
+        "function": "org.augugrumi.roulette.routes.EndpointPutRoute"
+      },
+      {
+        "name": "/endpoints/ingress/:ipSrc/:ipDst/:portSrc/:portDst/:idSfc/:protocol",
+        "type": "put",
+        "function": "org.augugrumi.roulette.routes.EndpointEgressUpdateRoute"
+      },
+      {
+        "name": "/endpoints/egress/:ipSrc/:ipDst/:portSrc/:portDst/:idSfc/:protocol",
+        "type": "put",
+        "function": "org.augugrumi.roulette.routes.EndpointIngressUpdateRoute"
+      },
+      {
+        "name": "/endpoints/ingress/:ipSrc/:ipDst/:portSrc/:portDst/:idSfc/:protocol",
+        "type": "get",
+        "function": "org.augugrumi.roulette.routes.EndpointIngressGetRoute"
+      },
+      {
+        "name": "/endpoints/egress/:ipSrc/:ipDst/:portSrc/:portDst/:idSfc/:protocol",
+        "type": "get",
+        "function": "org.augugrumi.roulette.routes.EndpointEgressGetRoute"
+      },
+      {
+        "name": "/endpoints/:_id",
+        "type": "get",
+        "function": "org.augugrumi.roulette.routes.EndpointGetRoute"
+      },
+      {
+        "name": "/endpoints/:_id",
+        "type": "delete",
+        "function": "org.augugrumi.roulette.routes.EndpointDeleteRoute"
+      }
+    ]
+  db-definition.json: |
+    {
+      "port": 27017,
+      "address": "roulette-mongodb",
+      "username": "",
+      "password": ""
+    }
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: roulette
+  namespace: default
+  labels:
+    k8s-app: roulette
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: roulette
+  template:
+    metadata:
+      labels:
+        k8s-app: roulette
+        name: roulette
+    spec:
+      containers:
+      - name: roulette
+        image: augugrumi/roulette
+        imagePullPolicy: Always
+        args: ["-e", "ironhide-egress-service", "-i", "ironhide-ingress-service"]
+        ports:
+        - name: http
+          containerPort: 80
+        volumeMounts:
+          - name: roulette-config
+            mountPath: /config
+        env:
+          - name: ROULETTE_API_CONFIG
+            value: /config/api-diagram.json
+          - name: ROULETTE_DATABASE_JSON_CONFIG
+            value: /config/db-definition.json
+      volumes:
+      - name: roulette-config
+        configMap:
+          name: roulette-config
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: roulette-service
+  namespace: default
+spec:
+  selector:
+    k8s-app: roulette
+  ports:
+  - protocol: TCP
+    port: 80
+    name: web
+  type: NodePort
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: vibes
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: roulette.vibes
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: roulette-service
+          servicePort: http
